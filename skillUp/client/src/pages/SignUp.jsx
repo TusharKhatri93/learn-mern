@@ -1,6 +1,7 @@
-import { useState } from "react"
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function SignUp(){
     const {signUp}=useAuth();
@@ -11,13 +12,16 @@ export default function SignUp(){
 
     const handleSubmit = async(e)=>{
         e.preventDefault();
+        if(!email || !password){
+            toast.error("Please fill all fields");
+            return;
+        }
         try{
             await signUp(email,password);
             navigate("/dashboard");
-            alert("SignUp successfull");
         }
         catch(err){
-            alert("SignUp failed : "+err.message);
+            toast.error("Something went wrong"||err.message);
         }
     }
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 export default function SignIn(){
     const {signIn, googleSignIn}=useAuth();
@@ -11,13 +12,18 @@ export default function SignIn(){
 
     const handleSubmit= async(e)=>{
         e.preventDefault();
+
+        if(!email || !password){
+            toast.error("Please fill all fields");
+            return;
+        }
+
         try{
             await signIn(email,password);
             navigate("/dashboard");
-            alert("LoggedIn successfull");
         }
         catch(err){
-            alert("LogIn failed : "+err.message);
+            toast.error("Something went wrong"||err.message);
         }
     }
 

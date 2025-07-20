@@ -18,7 +18,7 @@ export default function Navbar(){
                {user?(
                 <>
                     <span className="text-sm hidden sm:inline">{user.email}</span>
-                    <Link to="/dashboard" className="hover:underline">DashBoard</Link>
+                    <Link to="/dashboard" className="hover:underline">Dashboard</Link>
                     <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">Logout</button>
                 </>
                ):(
