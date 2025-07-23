@@ -38,12 +38,12 @@ export default function Dashboard() {
                 <p>Loading info......</p>
             }
 
+            <Outlet />
+
             <div className="flex flex-col items-center justify-center w-full mt-8">
-                <h1 className="text-2xl font-bold p-4">Learning Goals</h1>
                 <GoalManager />
             </div>
 
-            <Outlet />
         </div>
     )
 }
