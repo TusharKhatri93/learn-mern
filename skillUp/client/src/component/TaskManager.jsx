@@ -4,6 +4,7 @@ import { collection, doc, addDoc, updateDoc, deleteDoc, query, where, serverTime
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import ProgressChart from "./ProgressChart";
+import axios from "../utils/axios";
 
 export default function TaskManager({ goalId }) {
     const [task, setTask] = useState("");
@@ -19,16 +20,22 @@ export default function TaskManager({ goalId }) {
 
         setLoading(true);
         try {
-            await addDoc(collection(db, "tasks"), {
+            const token = await user.getIdToken();
+            await axios.post("/tasks", {
                 title: task,
-                uid: user.uid,
+                reminderAt: reminderAt || null,
                 goalId,
-                completed: false,
-                reminderAt: reminderAt ? new Date(reminderAt) : null,
-                createdAt: serverTimestamp(),
+                uid: user.uid,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
             });
+
             toast.success("Task added successfully");
             setTask("");
+            setReminderAt("");
+            fetchTasks();
         }
         catch (err) {
             toast.error("Error adding task" || err.message);
@@ -36,38 +43,57 @@ export default function TaskManager({ goalId }) {
         setLoading(false);
     };
 
+    const fetchTasks = async () => {
+        if (!user || !goalId) return;
+        try {
+            const token = await user.getIdToken();
+            const res = await axios.get(`/tasks/${goalId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setTasks(res.data);
+        } catch (err) {
+            toast.error("Error fetching tasks");
+        }
+    };
+
     const toggleCompletion = async (taskId, currentStatus) => {
         try {
-            const taskRef = doc(db, "tasks", taskId);
-            await updateDoc(taskRef, { completed: !currentStatus });
-        }
-        catch (err) {
+            const token = await user.getIdToken();
+            await axios.patch(`/tasks/toggle/${taskId}`, {
+                completed: !currentStatus,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+
+            fetchTasks();
+        } catch (err) {
             toast.error("Error updating task");
         }
     };
 
     const deleteTask = async (taskId) => {
         try {
-            const taskRef = doc(db, "tasks", taskId);
-            await deleteDoc(taskRef);
+            const token = await user.getIdToken();
+            await axios.patch(`/tasks/${taskId}`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+
             toast.success("Task deleted successfully");
-        }
-        catch (err) {
+            fetchTasks();
+        } catch (err) {
             toast.error("Error deleting task");
         }
-    }
+    };
 
     useEffect(() => {
-        if (!user || !goalId) return;
-
-        const q = query(collection(db, "tasks"), where("uid", "==", user.uid), where("goalId", "==", goalId));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const taskList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-            setTasks(taskList);
-        });
-        return () => unsubscribe();
-    }, [user, goalId])
+        fetchTasks();
+    }, [user, goalId]);
 
     return (
         <>
@@ -103,7 +129,7 @@ export default function TaskManager({ goalId }) {
                 <ul className="space-y-2 bg-gray-200 rounded p-3">
                     {tasks.map((task) => (
                         <li
-                            key={task.id}
+                            key={task._id}
                             className="bg-white p-3 rounded shadow"
                         >
                             {/* First row: Task and delete */}
@@ -112,14 +138,14 @@ export default function TaskManager({ goalId }) {
                                     <input
                                         type="checkbox"
                                         checked={task.completed}
-                                        onChange={() => toggleCompletion(task.id, task.completed)}
+                                        onChange={() => toggleCompletion(task._id, task.completed)}
                                     />
                                     <span className={task.completed ? "line-through text-gray-500" : ""}>
                                         {task.title}
                                     </span>
                                 </label>
                                 <button
-                                    onClick={() => deleteTask(task.id)}
+                                    onClick={() => deleteTask(task._id)}
                                     className="text-red-600 hover:underline"
                                 >
                                     Delete

@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { collection, addDoc, query, where, onSnapshot, serverTimestamp } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { auth, db } from "../firebase";
 import TaskManager from "./TaskManager";
 import toast from "react-hot-toast";
+import axios from "../utils/axios";
 
 export default function GoalManager() {
   const [title, setTitle] = useState("");
@@ -18,29 +17,58 @@ export default function GoalManager() {
 
     setLoading(true);
     try {
-      await addDoc(collection(db, "goals"), {
-        title,
-        uid: user.uid,
-        createdAt: serverTimestamp(),
-      });
+      const token = await user.getIdToken();
+      await axios.post(
+        "/goals",
+        { title: title },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       toast.success("Goal added successfully");
+      fetchGoals();
       setTitle("");
-    }
-    catch (err) {
-      toast.error("Error adding Goal" || err.message);
+
+    } catch (err) {
+      toast.error("Error adding Goal");
     }
     setLoading(false);
   }
 
-  useEffect(() => {
-    if (!user) return;
+  const handleDeleteGoal = async (goalId) => {
+    try {
+      const token = await user.getIdToken();
+      await axios.delete(`/goals/${goalId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success("Goal deleted successfully");
+      fetchGoals();
+    } catch (err) {
+      toast.error("Error deleting goal");
+    }
+  };
 
-    const q = query(collection(db, "goals"), where("uid", "==", user.uid));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const goalList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setGoals(goalList);
-    })
-    return () => unsubscribe();
+
+  const fetchGoals = async () => {
+    try {
+      const token = await user.getIdToken();
+      const res = await axios.get(`/goals/${user.uid}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setGoals(res.data);
+    } catch (err) {
+      toast.error("Error fetching goals");
+    }
+  };
+
+  useEffect(() => {
+    if (user) fetchGoals();
   }, [user]);
 
   if (loading) return <p className="text-center text-lg">Loading goals...</p>;
@@ -64,9 +92,15 @@ export default function GoalManager() {
       </form>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {goals.map((goal) => (
-          <div key={goal.id} className="border p-4 rounded bg-gray-50">
+          <div key={goal._id} className="border p-4 rounded bg-gray-50">
             <h3 className="font-semibold mb-2">{goal.title}</h3>
-            <TaskManager goalId={goal.id} />
+            <TaskManager goalId={goal._id} />
+            <button
+              onClick={() => handleDeleteGoal(goal._id)}
+              className="text-red-500 hover:underline"
+            >
+              Delete
+            </button>
           </div>
         ))}
       </div>
