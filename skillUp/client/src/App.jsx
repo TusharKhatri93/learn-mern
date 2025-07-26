@@ -10,6 +10,7 @@ import Navbar from "./component/Navbar";
 import HomeRedirect from "./pages/HomeRedirect";
 import {Toaster} from "react-hot-toast";
 import EditProfile from "./pages/EditProfile";
+import Profile from "./pages/Profile";
 import { useAuth } from "./context/AuthContext";
 
 function App() {
@@ -46,7 +47,9 @@ function App() {
                 <Dashboard/>
               </PrivateRoute>
             }>
-              <Route path="edit" element={<EditProfile/>} />
+        </Route>
+        <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} >
+            <Route path="edit" element={<EditProfile/>} />
         </Route>
         <Route path="/feedback" element={<FeedbackForm />}/>
         <Route path="*" element={<NotFoundPage />}/>

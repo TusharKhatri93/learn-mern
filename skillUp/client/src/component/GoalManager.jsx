@@ -71,7 +71,15 @@ export default function GoalManager() {
     if (user) fetchGoals();
   }, [user]);
 
-  if (loading) return <p className="text-center text-lg">Loading goals...</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-40">
+        <span className="animate-spin h-6 w-6 border-4 border-blue-500 border-t-transparent rounded-full"></span>
+        <span className="ml-2">Loading goals...</span>
+      </div>
+    );
+  }
+
 
   return (
     <div className="w-full max-w-7xl mx-auto mt-10 p-6 bg-white rounded shadow">
@@ -90,20 +98,29 @@ export default function GoalManager() {
           className="bg-blue-600 px-4 py-2 text-white rounded hover:bg-blue-700"
         >{loading ? "Adding.." : "Add Goal"}</button>
       </form>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {goals.map((goal) => (
-          <div key={goal._id} className="border p-4 rounded bg-gray-50">
-            <h3 className="font-semibold mb-2">{goal.title}</h3>
-            <TaskManager goalId={goal._id} />
-            <button
-              onClick={() => handleDeleteGoal(goal._id)}
-              className="text-red-500 hover:underline"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-      </div>
+      {goals.length === 0 ? (
+        <p className="text-center text-gray-500 mt-4">No goals yet</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {goals.map((goal) => (
+            <div key={goal._id} className="border p-4 rounded bg-gray-50">
+              <h3 className="font-semibold mb-2">{goal.title}</h3>
+              <TaskManager goalId={goal._id} />
+              <div className="flex justify-center mt-2">
+                <button
+                  onClick={() => handleDeleteGoal(goal._id)}
+                  className="text-red-500 hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
+
+            </div>
+          ))}
+        </div>
+      )}
+
+
 
     </div>
 
