@@ -1,0 +1,4 @@
+skillUp/client/.env
+skillUp/server/.env
+skillUp/server/config/firebaseAdmin.js
+skillUp/server/config/skillup-35fca-firebase-adminsdk-fbsvc-9b726504f2.json
